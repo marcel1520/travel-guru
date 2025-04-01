@@ -1,5 +1,78 @@
-import openai
+import os
 from validate_user_input import validate_restaurant_finder, validate_historical_places, validate_mystery_guide
+from dotenv import load_dotenv
+from openai import OpenAI
+
+# load the api key from the .env file
+load_dotenv()
+api_key = os.getenv("OPENAI_API_KEY")
+
+# Initialize the OpenAI client with the API key from the .env file
+client = OpenAI(api_key=api_key)
+
+# Direct system prompts with placeholders; these will be formatted with the collected details.
+restaurant_prompt_template = (
+    "You are a restaurant recommendation assistant with access to live web search. "
+    "The user is in {location} and is looking for a {cuisine} restaurant within a budget of {budget}. "
+    "Please perform a web search to find at least three specific sushi restaurants that meet these criteria. "
+    "For each restaurant, provide:\n"
+    "- The restaurant's name\n"
+    "- A brief description including its cuisine style, ambiance, and neighborhood details\n"
+    "- An estimate of the average food prices\n"
+    "- A clickable link to the restaurant's homepage (or state if not available)\n"
+    "Include inline citations for any external sources referenced in your answer. "
+    "Present your findings in a clear, detailed, and concise format."
+)
+
+tourist_prompt_template = (
+    "You are a tourist attractions guide with access to live web search. "
+    "The user is in {location} and prefers {preferences} attractions with a budget of {budget}. "
+    "Please perform a web search to find at least three specific tourist attractions in this area that match these preferences. "
+    "For each attraction, provide:\n"
+    "- The attraction's name\n"
+    "- A brief description including its key highlights, any entry fees, and opening hours if available\n"
+    "- A clickable link to the official website or a page with more information (or state if not available)\n"
+    "Include inline citations for any external sources referenced in your answer. "
+    "Present your findings in a clear, detailed, and concise format."
+)
+
+mystery_prompt_template = (
+    "You are a travel planning expert with access to live web search. "
+    "The user wants to travel to {city} for {days} days with {people} people and a budget of {budget}. "
+    "Please perform a web search to create a detailed, day-by-day mystery itinerary for their trip. "
+    "The itinerary should include:\n"
+    "- Specific daily recommendations for activities, dining, and sightseeing\n"
+    "- Estimated costs for meals, tickets, and other activities for each day\n"
+    "- Relevant links to official websites or booking pages for each recommendation (or state if not available)\n"
+    "Include inline citations for any external sources referenced in your answer. "
+    "Present your itinerary in a clear, engaging, and organized format."
+)
+
+def get_response_with_websearch(system_prompt, user_input, user_location=None, context_size="medium"):
+    messages = [
+        {"role": "system", "content": system_prompt},
+        {"role": "user", "content": user_input}
+    ]
+    web_search_tool = {
+        "type": "web_search_preview",
+        "search_context_size": context_size
+    }
+    if user_location:
+        web_search_tool["user_location"] = user_location
+
+    try:
+        response = client.responses.create(
+            model="gpt-4o",          # Use a model that supports web search
+            tools=[{"type": "web_search_preview"}],
+            input=messages,
+            max_output_tokens=500,
+            temperature=0.7,
+            store=False,
+            tool_choice="required"
+        )
+        return response.output_text
+    except Exception as e:
+        return f"Error fetching data from OpenAI: {str(e)}"
 
 
 class TripPlanner:
@@ -93,20 +166,50 @@ class TripPlanner:
         elif self.selected_service == "3":
             return f"The user wants to travel to {self.user_details['city']} for {self.user_details['days']} days with {self.user_details['people']} people and a budget of {self.user_details['budget']}."
 
-    def fetch_data_from_openai(self, query):
-        """Fetches data from OpenAI based on user input."""
-        openai.api_key = "your-openai-api-key"  # Make sure to use your OpenAI API key
-
-        try:
-            response = openai.Completion.create(
-                engine="text-davinci-003",
-                prompt=query,
-                max_tokens=150,
-                temperature=0.7
+    def format_system_prompt(self):
+        if self.selected_service == "1":
+            # Restaurant Finder
+            return restaurant_prompt_template.format(
+                location=self.user_details['location'],
+                cuisine=self.user_details['cuisine'],
+                budget=self.user_details['budget']
             )
-            return response.choices[0].text.strip()
-        except Exception as e:
-            return f"Error fetching data from OpenAI: {str(e)}"
+        elif self.selected_service == "2":
+            # Tourist Attractions
+            return tourist_prompt_template.format(
+                location=self.user_details['location'],
+                preferences=self.user_details['preferences'],
+                budget=self.user_details['budget']
+            )
+        elif self.selected_service == "3":
+            # Mystery Planning Guide
+            return mystery_prompt_template.format(
+                city=self.user_details['city'],
+                days=self.user_details['days'],
+                people=self.user_details['people'],
+                budget=self.user_details['budget']
+            )
+
+
+    def fetch_data_from_openai(self, formatted_text):
+        # First, generate the formatted system prompt based on the selected service.
+        system_prompt = self.format_system_prompt()
+        user_input = formatted_text  # Your existing method that aggregates user input
+
+        # Optionally, if you have user location details for refining web search:
+        user_location = {
+            "type": "approximate",
+            "city": self.user_details.get('location') or self.user_details.get('city'),
+
+        }
+
+        response = get_response_with_websearch(
+            system_prompt,
+            user_input,
+            user_location=user_location,
+            context_size="medium"  # Choose "low", "medium", or "high" based on your needs
+        )
+        return response
 
 
 def simulate_conversation():
