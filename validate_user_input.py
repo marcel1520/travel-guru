@@ -36,11 +36,4 @@ def validate_user_input(user_data):
     }
 
 
-# Example usage
-user_input = {
-    "location": "Paris",
-    "hotel_address": "123 Champs-Élysées",
-    "days_spent": "3"
-}
 
-print(validate_user_input(user_input))
