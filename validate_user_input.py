@@ -134,4 +134,8 @@ def validate_mystery_guide(user_data):
         "preferences": preferences if preferences else None
     }
 
+ service_handler
     return {"success": True, "service_data": service_data}
+
+    return {"success": True, "service_data": service_data}
+ main

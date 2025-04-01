@@ -1,87 +1,50 @@
 import unittest
-from validate_user_input import validate_user_input
+from validate_user_input import validate_restaurant_finder, validate_historical_places, validate_mystery_guide
 
+class TestValidateUserInput(unittest.TestCase):
 
-class TestUserInputValidation(unittest.TestCase):
-
-    def test_valid_input(self):
-        """Test a valid input scenario"""
-        user_input = {
-            "location": "New York",
-            "hotel_address": "123 Broadway St, NY",
-            "days_spent": "5"
-        }
-        result = validate_user_input(user_input)
-        self.assertTrue(result["success"])
-        self.assertEqual(result["validated_data"]["location"], "New York")
-        self.assertEqual(result["validated_data"]["hotel_address"], "123 Broadway St, NY")
-        self.assertEqual(result["validated_data"]["days_spent"], 5)
-
-    def test_missing_location(self):
-        """Test missing location"""
-        user_input = {
-            "location": "",
-            "hotel_address": "456 Market St, SF",
-            "days_spent": "3"
-        }
-        result = validate_user_input(user_input)
-        self.assertFalse(result["success"])
-        self.assertIn("Location is required.", result["errors"])
-
-    def test_invalid_hotel_address(self):
-        """Test invalid hotel address format"""
-        user_input = {
-            "location": "London",
-            "hotel_address": "123 @ Invalid Street!",
-            "days_spent": "2"
-        }
-        result = validate_user_input(user_input)
-        self.assertFalse(result["success"])
-        self.assertIn("Invalid hotel address format.", result["errors"])
-
-    def test_non_numeric_days_spent(self):
-        """Test non-numeric days spent"""
-        user_input = {
-            "location": "Tokyo",
-            "hotel_address": "789 Shibuya St",
-            "days_spent": "three"
-        }
-        result = validate_user_input(user_input)
-        self.assertFalse(result["success"])
-        self.assertIn("Days spent must be a positive number.", result["errors"])
-
-    def test_negative_days_spent(self):
-        """Test negative days spent"""
-        user_input = {
-            "location": "Berlin",
-            "hotel_address": "",
-            "days_spent": "-2"
-        }
-        result = validate_user_input(user_input)
-        self.assertFalse(result["success"])
-        self.assertIn("Days spent must be a positive number.", result["errors"])
-
-    def test_zero_days_spent(self):
-        """Test zero days spent"""
+    def test_valid_input_restaurant(self):
         user_input = {
             "location": "Paris",
-            "hotel_address": "123 Champs-Élysées",
-            "days_spent": "0"
+            "budget": "500",
+            "theme": "vegan",
+            "hotel_address": "123 Paris St"
         }
-        result = validate_user_input(user_input)
-        self.assertFalse(result["success"])
-        self.assertIn("Days spent must be a positive number.", result["errors"])
-
-    def test_optional_hotel_address(self):
-        """Test missing hotel address (should be allowed)"""
-        user_input = {
-            "location": "Amsterdam",
-            "days_spent": "4"
-        }
-        result = validate_user_input(user_input)
+        result = validate_restaurant_finder(user_input)
         self.assertTrue(result["success"])
-        self.assertEqual(result["validated_data"]["hotel_address"], None)
+        self.assertEqual(result["service_data"]["location"], "Paris")
+        self.assertEqual(result["service_data"]["budget"], 500)
 
+    def test_valid_input_historical(self):
+        user_input = {
+            "location": "Rome",
+            "hotel_address": "456 Rome Ave",
+            "number_of_people": "4",
+            "total_budget": "2000",
+            "max_ticket_price": "50"
+        }
+        result = validate_historical_places(user_input)
+        self.assertTrue(result["success"])
+        self.assertEqual(result["service_data"]["location"], "Rome")
+        self.assertEqual(result["service_data"]["total_budget"], 2000)
 
-if __name__ == '__main__':
+    def test_valid_input_mystery(self):
+        user_input = {
+            "public_transport": "yes",
+            "budget": "1000",
+            "days_spent": "5",
+            "preferences": "castles, museums"
+        }
+        result = validate_mystery_guide(user_input)
+        self.assertTrue(result["success"])
+        self.assertEqual(result["service_data"]["public_transport"], "yes")
+        self.assertEqual(result["service_data"]["budget"], 1000)
+
+    def test_invalid_service(self):
+        user_input = {"location": "Paris", "budget": "-10",}
+        result = validate_restaurant_finder(user_input)
+        self.assertFalse(result["success"])
+        self.assertIn("Budget must be a positive number.", result["errors"])
+
+if __name__ == "__main__":
     unittest.main()
