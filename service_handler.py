@@ -1,5 +1,5 @@
 import openai
-
+from validate_user_input import validate_user_input
 
 class TripPlanner:
     def __init__(self):
