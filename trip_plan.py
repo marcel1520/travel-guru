@@ -65,7 +65,7 @@ def get_response_with_websearch(system_prompt, user_input, user_location=None, c
             model="gpt-4o",          # Use a model that supports web search
             tools=[{"type": "web_search_preview"}],
             input=messages,
-            max_output_tokens=500,
+            max_output_tokens=2000,
             temperature=0.7,
             store=False,
             tool_choice="required"
@@ -225,4 +225,4 @@ def simulate_conversation():
             break
 
 # Uncomment the next line to run the conversation simulation
-simulate_conversation()
+#simulate_conversation()
