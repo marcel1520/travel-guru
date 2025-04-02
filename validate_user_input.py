@@ -136,6 +136,6 @@ def validate_mystery_guide(user_data):
 
  #service_handler
     return {"success": True, "service_data": service_data}
-
+#alex
     #return {"success": True, "service_data": service_data}
 

@@ -224,5 +224,6 @@ def simulate_conversation():
             print(f"\nBot: Here's your trip planning: {response}")
             break
 
+#alex
 # Uncomment the next line to run the conversation simulation
 #simulate_conversation()
