@@ -120,6 +120,11 @@ class TripPlanner:
             "3": ["city", "people", "budget", "days"]
         }
 
+        # Check if all expected inputs are already collected.
+        if len(self.user_details) >= len(steps[self.selected_service]):
+            return self.validate_and_generate_response()
+
+
         current_step = len(self.user_details)
         expected_key = steps[self.selected_service][current_step]
         self.user_details[expected_key] = user_input
@@ -155,6 +160,9 @@ class TripPlanner:
 
         formatted_text = self.format_user_input()
         response = self.fetch_data_from_openai(formatted_text)
+
+        self.reset()
+
         return response
 
     def format_user_input(self):
@@ -211,6 +219,11 @@ class TripPlanner:
         )
         return response
 
+    def reset(self):
+        """Resets the conversation state for a new session."""
+        self.user_details = {}
+        self.step = 0
+        self.selected_service = ""
 
 def simulate_conversation():
     trip_planner = TripPlanner()
